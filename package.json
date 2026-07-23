@@ -1,7 +1,7 @@
 {
-  "name": "claude-code-opentelemetry",
-  "version": "1.0.0",
-  "description": "Claude Code-compatible OpenTelemetry metrics for Pi, ready for Grafana dashboard 25255",
+  "name": "@xiaoxianma/claude-code-opentelemetry",
+  "version": "1.1.0",
+  "description": "Bring pi into your Claude Code observability stack—same OTLP pipeline, same metrics, same Grafana dashboard.",
   "type": "module",
   "license": "MIT",
   "author": "xiaoxianma",
@@ -28,16 +28,21 @@
     "node": ">=20"
   },
   "files": [
-    "index.ts",
-    "core.ts",
-    "README.md",
-    "LICENSE"
+    "src",
+    "CHANGELOG.md",
+    "SECURITY.md"
   ],
   "scripts": {
-    "test": "tsx --test core.test.ts",
-    "typecheck": "tsc",
-    "check": "npm test && npm run typecheck",
-    "prepublishOnly": "npm run check"
+    "lint": "biome check src/ test/",
+    "lint:fix": "biome check --write src/ test/",
+    "test": "tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck && npm test",
+    "prepack": "npm run check"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "dependencies": {
     "@opentelemetry/api": "1.9.0",
@@ -47,23 +52,20 @@
     "@opentelemetry/semantic-conventions": "1.43.0",
     "diff": "8.0.4"
   },
-  "devDependencies": {
-    "@earendil-works/pi-coding-agent": "^0.81.1",
-    "@types/node": "24.10.1",
-    "tsx": "^4.20.6",
-    "typescript": "5.9.3"
-  },
   "peerDependencies": {
-    "@earendil-works/pi-coding-agent": ">=0.81.1"
+    "@earendil-works/pi-coding-agent": "*"
   },
-  "peerDependenciesMeta": {
-    "@earendil-works/pi-coding-agent": {
-      "optional": true
-    }
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.14",
+    "@earendil-works/pi-coding-agent": "^0.81.1",
+    "@types/node": "^24.10.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
   },
   "pi": {
     "extensions": [
-      "./index.ts"
-    ]
+      "./src/index.ts"
+    ],
+    "image": "https://raw.githubusercontent.com/xiaoxianma/claude-code-opentelemetry/main/media/hero.png"
   }
 }

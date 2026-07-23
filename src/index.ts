@@ -1,3 +1,10 @@
+import { execFileSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { chmodSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import { homedir, hostname, release } from "node:os";
+import { resolve } from "node:path";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { Attributes, Counter } from "@opentelemetry/api";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-http";
 import { resourceFromAttributes } from "@opentelemetry/resources";
@@ -6,23 +13,7 @@ import {
   MeterProvider,
   PeriodicExportingMetricReader,
 } from "@opentelemetry/sdk-metrics";
-import {
-  ATTR_SERVICE_NAME,
-  ATTR_SERVICE_VERSION,
-} from "@opentelemetry/semantic-conventions";
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { execFileSync } from "node:child_process";
-import { randomUUID } from "node:crypto";
-import {
-  chmodSync,
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
-import { readFile } from "node:fs/promises";
-import { homedir, hostname, release } from "node:os";
-import { resolve } from "node:path";
+import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic-conventions";
 import {
   changedLineCounts,
   createdPullRequestCount,
@@ -31,13 +22,13 @@ import {
   parseHeaders,
   parseResourceAttributes,
   resolveMetricsEndpoint,
-  sessionStartType,
   type SessionStartReason,
+  sessionStartType,
 } from "./core.js";
 
 const MAX_TRACKED_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_USER_ACTIVE_GAP_SECONDS = 60;
-const EXTENSION_VERSION = "1.0.0";
+const EXTENSION_VERSION = "1.1.0";
 
 type MetricSet = {
   session: Counter;
@@ -83,10 +74,12 @@ function enabled(value: string | undefined, fallback: boolean): boolean {
 
 function gitConfig(key: string): string | undefined {
   try {
-    return execFileSync("git", ["config", "--global", "--get", key], {
-      encoding: "utf8",
-      timeout: 2_000,
-    }).trim() || undefined;
+    return (
+      execFileSync("git", ["config", "--global", "--get", key], {
+        encoding: "utf8",
+        timeout: 2_000,
+      }).trim() || undefined
+    );
   } catch {
     return undefined;
   }
@@ -145,11 +138,13 @@ async function textFile(path: string): Promise<string | undefined> {
 
 function gitHead(cwd: string): string | undefined {
   try {
-    return execFileSync("git", ["-C", cwd, "rev-parse", "HEAD"], {
-      encoding: "utf8",
-      timeout: 2_000,
-      stdio: ["ignore", "pipe", "ignore"],
-    }).trim() || undefined;
+    return (
+      execFileSync("git", ["-C", cwd, "rev-parse", "HEAD"], {
+        encoding: "utf8",
+        timeout: 2_000,
+        stdio: ["ignore", "pipe", "ignore"],
+      }).trim() || undefined
+    );
   } catch {
     return undefined;
   }
@@ -430,29 +425,39 @@ export default function claudeCodeMetrics(pi: ExtensionAPI): void {
     const edit = editSnapshots.get(event.toolCallId);
     if (edit) {
       editSnapshots.delete(event.toolCallId);
-      const displayName = toolName === "notebookedit" ? "NotebookEdit" : `${toolName[0]?.toUpperCase()}${toolName.slice(1)}`;
-      runtime.metrics.codeEditDecision.add(
-        1,
-        attrs({
-          tool_name: displayName,
-          decision: "accept",
-          source: "config",
-          language: edit.language,
-        }),
-      );
 
-      const after = await textFile(edit.path);
-      const before = observedFiles.get(edit.path);
-      if (before !== undefined && after !== undefined) {
-        const changed = changedLineCounts(before, after);
-        observedFiles.set(edit.path, after);
-        if (changed.added > 0) {
-          runtime.metrics.lines.add(changed.added, attrs({ type: "added", model: edit.model }));
-        }
-        if (changed.removed > 0) {
-          runtime.metrics.lines.add(changed.removed, attrs({ type: "removed", model: edit.model }));
+      if (!event.isError) {
+        const displayName =
+          toolName === "notebookedit"
+            ? "NotebookEdit"
+            : `${toolName[0]?.toUpperCase()}${toolName.slice(1)}`;
+        runtime.metrics.codeEditDecision.add(
+          1,
+          attrs({
+            tool_name: displayName,
+            decision: "accept",
+            source: "config",
+            language: edit.language,
+          }),
+        );
+
+        const after = await textFile(edit.path);
+        const before = observedFiles.get(edit.path);
+        if (before !== undefined && after !== undefined) {
+          const changed = changedLineCounts(before, after);
+          observedFiles.set(edit.path, after);
+          if (changed.added > 0) {
+            runtime.metrics.lines.add(changed.added, attrs({ type: "added", model: edit.model }));
+          }
+          if (changed.removed > 0) {
+            runtime.metrics.lines.add(
+              changed.removed,
+              attrs({ type: "removed", model: edit.model }),
+            );
+          }
         }
       }
+
       const remaining = (pendingEdits.get(edit.path) ?? 1) - 1;
       if (remaining > 0) pendingEdits.set(edit.path, remaining);
       else pendingEdits.delete(edit.path);

@@ -8,10 +8,13 @@ import {
   parseHeaders,
   resolveMetricsEndpoint,
   sessionStartType,
-} from "./core.ts";
+} from "../src/core.ts";
 
 test("resolves standard OTLP metrics endpoint without duplication", () => {
-  assert.equal(resolveMetricsEndpoint("https://collector.example"), "https://collector.example/v1/metrics");
+  assert.equal(
+    resolveMetricsEndpoint("https://collector.example"),
+    "https://collector.example/v1/metrics",
+  );
   assert.equal(
     resolveMetricsEndpoint("https://collector.example/v1/metrics"),
     "https://collector.example/v1/metrics",
@@ -54,11 +57,20 @@ test("counts only successful-looking PR creation URLs", () => {
     1,
   );
   assert.equal(
-    createdPullRequestCount("gh pr create", "https://github.com/org/repo/pull/7\nhttps://github.com/org/repo/pull/7"),
+    createdPullRequestCount(
+      "gh pr create",
+      "https://github.com/org/repo/pull/7\nhttps://github.com/org/repo/pull/7",
+    ),
     1,
   );
-  assert.equal(createdPullRequestCount("echo gh pr create", "https://github.com/org/repo/pull/7"), 0);
-  assert.equal(createdPullRequestCount("gh pr create --dry-run", "https://github.com/org/repo/pull/7"), 0);
+  assert.equal(
+    createdPullRequestCount("echo gh pr create", "https://github.com/org/repo/pull/7"),
+    0,
+  );
+  assert.equal(
+    createdPullRequestCount("gh pr create --dry-run", "https://github.com/org/repo/pull/7"),
+    0,
+  );
 });
 
 test("recognizes commit creation without matching quoted examples", () => {

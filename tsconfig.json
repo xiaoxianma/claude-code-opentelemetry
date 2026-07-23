@@ -9,7 +9,7 @@
     "target": "ES2023"
   },
   "include": [
-    "core.ts",
-    "index.ts"
+    "src/**/*.ts",
+    "test/**/*.ts"
   ]
 }

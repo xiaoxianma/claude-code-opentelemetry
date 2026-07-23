@@ -1,5 +1,5 @@
-import { diffLines } from "diff";
 import { extname } from "node:path";
+import { diffLines } from "diff";
 
 export type SessionStartReason = "startup" | "reload" | "new" | "resume" | "fork";
 
@@ -27,7 +27,10 @@ function countLines(value: string): number {
   return lines.length;
 }
 
-export function changedLineCounts(before: string, after: string): { added: number; removed: number } {
+export function changedLineCounts(
+  before: string,
+  after: string,
+): { added: number; removed: number } {
   let added = 0;
   let removed = 0;
 
@@ -111,7 +114,12 @@ export function parseHeaders(raw: string | undefined): Record<string, string> {
       .flatMap((pair) => {
         const separator = pair.indexOf("=");
         return separator > 0
-          ? [[decodeHeaderPart(pair.slice(0, separator).trim()), decodeHeaderPart(pair.slice(separator + 1).trim())]]
+          ? [
+              [
+                decodeHeaderPart(pair.slice(0, separator).trim()),
+                decodeHeaderPart(pair.slice(separator + 1).trim()),
+              ],
+            ]
           : [];
       }),
   );
