@@ -2,7 +2,7 @@
 
 ## 1.1.0
 
-- Publish as `@xiaoxianma/claude-code-opentelemetry` for `pi install npm:...`
+- Publish as `claude-code-opentelemetry` for one-command npm installation
 - Adopt standard pi package layout with `src/`, `test/`, gallery artwork, linting, and package allowlist
 - Rewrite documentation around npm installation, quick start, compatibility contract, privacy, and troubleshooting
 - Count edit decisions and line changes only after successful edit/write operations

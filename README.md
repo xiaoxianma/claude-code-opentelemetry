@@ -1,6 +1,6 @@
 # Claude Code OpenTelemetry for pi
 
-[![npm](https://img.shields.io/npm/v/%40xiaoxianma%2Fclaude-code-opentelemetry?style=flat-square&color=cb3837)](https://www.npmjs.com/package/@xiaoxianma/claude-code-opentelemetry)
+[![npm](https://img.shields.io/npm/v/claude-code-opentelemetry?style=flat-square&color=cb3837)](https://www.npmjs.com/package/claude-code-opentelemetry)
 [![CI](https://img.shields.io/github/actions/workflow/status/xiaoxianma/claude-code-opentelemetry/ci.yml?branch=main&style=flat-square)](https://github.com/xiaoxianma/claude-code-opentelemetry/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)](LICENSE)
 [![Grafana 25255](https://img.shields.io/badge/Grafana-25255-f97316?style=flat-square)](https://grafana.com/grafana/dashboards/25255-claude-code-metrics-prometheus/)
@@ -18,7 +18,7 @@ This [pi package](https://github.com/earendil-works/pi/blob/main/packages/coding
 ## Install in one command
 
 ```bash
-pi install npm:@xiaoxianma/claude-code-opentelemetry
+pi install npm:claude-code-opentelemetry
 ```
 
 Restart pi. Existing Claude Code telemetry configuration is reused automatically.
@@ -36,7 +36,7 @@ Restart pi. Existing Claude Code telemetry configuration is reused automatically
 | Unclear approximation semantics | Explicit, documented compatibility contract |
 
 ```bash
-pi update npm:@xiaoxianma/claude-code-opentelemetry
+pi update npm:claude-code-opentelemetry
 ```
 
 ## Quick start

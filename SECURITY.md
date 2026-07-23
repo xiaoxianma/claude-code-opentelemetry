@@ -2,7 +2,7 @@
 
 ## Trust model
 
-`@xiaoxianma/claude-code-opentelemetry` is a pi extension. Like every pi extension, it runs with permissions of local user and is not a sandbox. Install only packages and versions you trust.
+`claude-code-opentelemetry` is a pi extension. Like every pi extension, it runs with permissions of local user and is not a sandbox. Install only packages and versions you trust.
 
 Extension:
 
@@ -22,7 +22,7 @@ Collector endpoint, transport security, authentication, storage, access control,
 Security fixes target latest published npm version. Upgrade with:
 
 ```bash
-pi update npm:@xiaoxianma/claude-code-opentelemetry
+pi update npm:claude-code-opentelemetry
 ```
 
 ## Report a vulnerability

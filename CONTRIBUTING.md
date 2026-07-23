@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for improving `@xiaoxianma/claude-code-opentelemetry`.
+Thanks for improving `claude-code-opentelemetry`.
 
 ## Scope
 
