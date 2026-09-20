@@ -1,6 +1,6 @@
 {
   "name": "claude-code-opentelemetry",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Bring pi into your Claude Code observability stack—same OTLP pipeline, same metrics, same Grafana dashboard.",
   "type": "module",
   "license": "MIT",

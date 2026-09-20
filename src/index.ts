@@ -19,16 +19,19 @@ import {
   createdPullRequestCount,
   createsGitCommit,
   languageForPath,
+  type ModelIdentity,
+  modelIdentity,
   parseHeaders,
   parseResourceAttributes,
   resolveMetricsEndpoint,
   type SessionStartReason,
   sessionStartType,
+  UNKNOWN_MODEL,
 } from "./core.js";
 
 const MAX_TRACKED_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_USER_ACTIVE_GAP_SECONDS = 60;
-const EXTENSION_VERSION = "1.1.0";
+const EXTENSION_VERSION = "1.2.0";
 
 type MetricSet = {
   session: Counter;
@@ -50,7 +53,7 @@ type Runtime = {
 type EditSnapshot = {
   path: string;
   language: string;
-  model: string;
+  model: ModelIdentity;
 };
 
 type BashSnapshot = {
@@ -261,7 +264,7 @@ function createRuntime(): Runtime | undefined {
 export default function claudeCodeMetrics(pi: ExtensionAPI): void {
   let runtime: Runtime | undefined;
   let standardAttributes: Attributes = {};
-  let currentModel = "unknown";
+  let currentModel: ModelIdentity = UNKNOWN_MODEL;
   let cliActiveSince: number | undefined;
   let userActiveSince: number | undefined;
   let lastError: string | undefined;
@@ -312,24 +315,24 @@ export default function claudeCodeMetrics(pi: ExtensionAPI): void {
       standardAttributes["app.version"] = EXTENSION_VERSION;
     }
 
-    currentModel = ctx.model?.id ?? "unknown";
+    currentModel = modelIdentity(ctx.model?.provider, ctx.model?.id);
     userActiveSince = Date.now();
     const startType = sessionStartType(
       event.reason as SessionStartReason,
       ctx.sessionManager.getEntries().length > 0,
     );
     if (startType) {
-      runtime.metrics.session.add(1, attrs({ start_type: startType, model: currentModel }));
+      runtime.metrics.session.add(1, attrs({ start_type: startType, ...currentModel }));
     }
 
     // Publish every dashboard series immediately; zero-valued counters become nonzero only on observed activity.
-    runtime.metrics.lines.add(0, attrs({ type: "added", model: currentModel }));
-    runtime.metrics.lines.add(0, attrs({ type: "removed", model: currentModel }));
+    runtime.metrics.lines.add(0, attrs({ type: "added", ...currentModel }));
+    runtime.metrics.lines.add(0, attrs({ type: "removed", ...currentModel }));
     runtime.metrics.pullRequest.add(0, attrs());
     runtime.metrics.commit.add(0, attrs());
-    runtime.metrics.cost.add(0, attrs({ model: currentModel, query_source: "main" }));
+    runtime.metrics.cost.add(0, attrs({ ...currentModel, query_source: "main" }));
     for (const type of ["input", "output", "cacheRead", "cacheCreation"]) {
-      runtime.metrics.token.add(0, attrs({ model: currentModel, query_source: "main", type }));
+      runtime.metrics.token.add(0, attrs({ ...currentModel, query_source: "main", type }));
     }
     runtime.metrics.codeEditDecision.add(
       0,
@@ -340,7 +343,7 @@ export default function claudeCodeMetrics(pi: ExtensionAPI): void {
   });
 
   pi.on("model_select", async (event) => {
-    currentModel = event.model.id;
+    currentModel = modelIdentity(event.model.provider, event.model.id);
   });
 
   pi.on("input", async () => {
@@ -367,14 +370,22 @@ export default function claudeCodeMetrics(pi: ExtensionAPI): void {
 
   pi.on("turn_end", async (event) => {
     if (!runtime || event.message.role !== "assistant") return;
-    const message = event.message as typeof event.message & { usage?: Usage; model?: string };
+    const message = event.message as typeof event.message & {
+      usage?: Usage;
+      model?: string;
+      provider?: string;
+    };
     const usage = message.usage;
     if (!usage) return;
 
-    const model = message.model ?? currentModel;
+    // The assistant message names the model and route that actually served the turn, which
+    // can differ from the session default after a mid-turn switch or subagent handoff.
+    const identity = message.model
+      ? modelIdentity(message.provider ?? currentModel.provider, message.model)
+      : currentModel;
     const effort = pi.getThinkingLevel();
     const requestAttrs: Attributes = {
-      model,
+      ...identity,
       query_source: "main",
       ...(effort === "off" ? {} : { effort }),
     };
@@ -447,13 +458,10 @@ export default function claudeCodeMetrics(pi: ExtensionAPI): void {
           const changed = changedLineCounts(before, after);
           observedFiles.set(edit.path, after);
           if (changed.added > 0) {
-            runtime.metrics.lines.add(changed.added, attrs({ type: "added", model: edit.model }));
+            runtime.metrics.lines.add(changed.added, attrs({ type: "added", ...edit.model }));
           }
           if (changed.removed > 0) {
-            runtime.metrics.lines.add(
-              changed.removed,
-              attrs({ type: "removed", model: edit.model }),
-            );
+            runtime.metrics.lines.add(changed.removed, attrs({ type: "removed", ...edit.model }));
           }
         }
       }

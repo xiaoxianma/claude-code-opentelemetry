@@ -80,7 +80,13 @@ Pi data appears under `service_name="pi-coding-agent"`. Existing Claude Code dat
 | `claude_code.code_edit_tool.decision` | `claude_code_code_edit_tool_decision_total` | Successful edit/write decisions |
 | `claude_code.active_time.total` | `claude_code_active_time_seconds_total` | CLI and estimated user-active seconds |
 
-Dashboard attributes include `organization_id`, `user_email`, `session_id`, `model`, `type`, `decision`, and `language`. Zero-valued series are initialized at session start so every dashboard panel is discoverable before its first matching action.
+Dashboard attributes include `organization_id`, `user_email`, `session_id`, `model`, `provider`, `type`, `decision`, and `language`. Zero-valued series are initialized at session start so every dashboard panel is discoverable before its first matching action.
+
+### Model and provider
+
+Pi can reach one model through several provider routes, and it scopes the model id to the route: the `anthropic` provider reports `claude-opus-5`, `litellm` reports `anthropic/claude-opus-5`, and `litellm-openai` reports `openai/gpt-6-astra`. Emitting those ids verbatim splits a single model across several `model` label values and understates its per-model cost.
+
+`model` therefore carries the bare id, matching Claude Code's convention and keeping dashboard 25255's model panels correct, while `provider` carries the route. Break down by `provider` to compare routes, and leave it out to aggregate a model across all of them.
 
 ## Compatibility contract
 
@@ -95,6 +101,7 @@ This project targets **Claude Code metrics and Grafana compatibility**, not beha
 | Commits | Counted only when an observed `git commit` advances `HEAD` |
 | Pull requests | Counted only when successful `gh pr create` or `glab mr create` output contains a new PR/MR URL |
 | Edit decisions | Emitted as `accept` with source `config`; pi has no Claude Code permission-decision event |
+| Provider route | Reported as `provider`; Claude Code has no equivalent attribute because it does not route one model across providers |
 | CLI active time | Measured wall-clock agent processing time |
 | User active time | Bounded interaction estimate; pi does not expose Claude Code's keyboard-focus tracker |
 
