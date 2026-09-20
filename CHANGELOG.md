@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0
+
+- Report the pi provider route as a `provider` attribute on session, token, cost, and lines-of-code metrics
+- Strip the provider-scoped vendor path from `model` so one model no longer splits across several label values
+- Attribute each turn to the model and provider named by its assistant message rather than the session default
+
 ## 1.1.0
 
 - Publish as `claude-code-opentelemetry` for one-command npm installation

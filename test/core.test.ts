@@ -5,6 +5,7 @@ import {
   createdPullRequestCount,
   createsGitCommit,
   languageForPath,
+  modelIdentity,
   parseHeaders,
   resolveMetricsEndpoint,
   sessionStartType,
@@ -23,6 +24,39 @@ test("resolves standard OTLP metrics endpoint without duplication", () => {
     resolveMetricsEndpoint("https://ignored.example", "https://metrics.example/custom"),
     "https://metrics.example/custom",
   );
+});
+
+test("separates the provider route from the bare model id", () => {
+  // One model reached through three routes must collapse to a single `model` value.
+  assert.deepEqual(modelIdentity("anthropic", "claude-opus-5"), {
+    model: "claude-opus-5",
+    provider: "anthropic",
+  });
+  assert.deepEqual(modelIdentity("litellm", "anthropic/claude-opus-5"), {
+    model: "claude-opus-5",
+    provider: "litellm",
+  });
+  assert.deepEqual(modelIdentity("openai-codex", "gpt-6-astra"), {
+    model: "gpt-6-astra",
+    provider: "openai-codex",
+  });
+  assert.deepEqual(modelIdentity("litellm-openai", "openai/gpt-6-astra"), {
+    model: "gpt-6-astra",
+    provider: "litellm-openai",
+  });
+});
+
+test("falls back to unknown for missing or malformed model identity", () => {
+  assert.deepEqual(modelIdentity(undefined, undefined), {
+    model: "unknown",
+    provider: "unknown",
+  });
+  assert.deepEqual(modelIdentity("", ""), { model: "unknown", provider: "unknown" });
+  // A trailing separator leaves no id to report.
+  assert.deepEqual(modelIdentity("litellm", "anthropic/"), {
+    model: "unknown",
+    provider: "litellm",
+  });
 });
 
 test("maps Pi session reasons to Claude start types", () => {

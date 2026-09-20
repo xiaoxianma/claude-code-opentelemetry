@@ -3,6 +3,29 @@ import { diffLines } from "diff";
 
 export type SessionStartReason = "startup" | "reload" | "new" | "resume" | "fork";
 
+/** Dashboard-facing model attributes: the bare model id plus the pi provider route serving it. */
+export type ModelIdentity = {
+  model: string;
+  provider: string;
+};
+
+export const UNKNOWN_MODEL: ModelIdentity = { model: "unknown", provider: "unknown" };
+
+/**
+ * Pi model ids are scoped to the provider route that serves them: `anthropic` reports
+ * `claude-opus-5`, `litellm` reports `anthropic/claude-opus-5`, and `litellm-openai`
+ * reports `openai/gpt-6-astra`. Emitting those ids verbatim splits one model across
+ * several `model` label values, so the vendor path is stripped and the route is reported
+ * separately. Claude Code emits bare ids, which keeps the `model` label compatible.
+ */
+export function modelIdentity(provider: string | undefined, id: string | undefined): ModelIdentity {
+  const bare = id?.slice(id.lastIndexOf("/") + 1);
+  return {
+    model: bare || UNKNOWN_MODEL.model,
+    provider: provider || UNKNOWN_MODEL.provider,
+  };
+}
+
 export function resolveMetricsEndpoint(baseEndpoint: string, metricsEndpoint?: string): string {
   if (metricsEndpoint) return metricsEndpoint;
   const normalized = baseEndpoint.replace(/\/+$/, "");
